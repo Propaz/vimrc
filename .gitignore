@@ -1,0 +1,7 @@
+# Vim temporary files
+.undo/
+.backup/
+.swp/
+
+# vim-plug plugin directory
+plugged/
