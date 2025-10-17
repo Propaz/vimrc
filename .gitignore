@@ -2,6 +2,7 @@
 .undo/
 .backup/
 .swp/
+.netrwhist
 
 # vim-plug plugin directory
 plugged/
