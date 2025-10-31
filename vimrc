@@ -324,6 +324,9 @@ endfunction
 "  AUTOCOMMANDS
 " =============================================================================
 
+" Trim trailing whitespace on save
+autocmd BufWritePre * %s/\s\+$//e
+
 " --- Filetype Specific Settings ---
 autocmd BufNewFile,BufRead *.py setlocal expandtab autoindent tabstop=4 softtabstop=4 shiftwidth=4
 autocmd BufNewFile,BufRead *.go setlocal noexpandtab tabstop=4 shiftwidth=4
