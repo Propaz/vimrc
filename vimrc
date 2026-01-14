@@ -105,6 +105,7 @@ Plug 'tpope/vim-surround'
 " Linting & Completion
 Plug 'dense-analysis/ale'
 Plug 'ward/VimCompletesMe'
+Plug 'Propaz/karate-linter'
 
 " Language Specific
 Plug 'fatih/vim-go', { 'do': ':GoUpdateBinaries' }
