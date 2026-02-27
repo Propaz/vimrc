@@ -87,9 +87,9 @@ set directory=~/.vim/.swp//
 call plug#begin('~/.vim/plugged')
 
 " Core & UI
-Plug 'vim-airline/vim-airline'
+Plug 'itchyny/lightline.vim'
 Plug 'morhetz/gruvbox'
-Plug 'preservim/nerdtree'
+" Plug 'preservim/nerdtree' " Replaced by netrw
 Plug 'mbbill/undotree'
 
 " Fuzzy Finder
@@ -101,6 +101,7 @@ Plug 'tpope/vim-fugitive'
 
 " Editing & Text Objects
 Plug 'tpope/vim-surround'
+Plug 'tpope/vim-commentary'
 
 " Linting & Completion
 Plug 'dense-analysis/ale'
@@ -173,15 +174,20 @@ nmap <silent> <leader><CR> o<ESC>
 "  PLUGIN CONFIGURATION
 " =============================================================================
 
-" --- netrw ---
-let g:netrw_banner=0		" Hide the directory banner
-let g:netrw_liststyle=3		" 0=thin; 1=long; 2=wide; 3=tree
-
-" --- NERDTree ---
-nmap <leader>e :NERDTreeToggle<CR>
+" --- netrw (File Explorer) ---
+let g:netrw_banner = 0                 " Hide the directory banner
+let g:netrw_liststyle = 0              " Use tree-style view
+let g:netrw_browse_split = 4           " Open files in the previous window (acting like a sidebar)
+let g:netrw_winsize = 25               " Set sidebar width to 25%
+let g:netrw_localcopydircmd = 'cp -r'  " Ensure recursive copy works
+" Map leader-e to open netrw in a vertical split, like NERDTree
+nmap <leader>e :Vexplore<CR>
 
 " --- Undotree ---
 nnoremap <F5> :UndotreeToggle<CR>
+
+" --- lightline ---
+let g:lightline = { 'colorscheme': 'gruvbox' }
 
 " --- fzf ---
 nnoremap <silent> <Leader>b :Buffers<CR>
