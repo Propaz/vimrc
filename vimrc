@@ -64,6 +64,11 @@ set incsearch           " Show matches incrementally while typing
 set ignorecase          " Ignore case when searching
 set smartcase           " Override ignorecase if search pattern has uppercase letters
 
+" Use ripgrep for :grep command
+if executable('rg')
+    set grepprg=rg\ --vimgrep\ --no-heading\ --smart-case
+    set grepformat=%f:%l:%c:%m
+endif
 
 " =============================================================================
 "  FILES, BACKUPS & UNDO
@@ -89,7 +94,7 @@ call plug#begin('~/.vim/plugged')
 " Core & UI
 Plug 'itchyny/lightline.vim'
 Plug 'morhetz/gruvbox'
-" Plug 'preservim/nerdtree' " Replaced by netrw
+Plug 'preservim/nerdtree'
 Plug 'mbbill/undotree'
 
 " Fuzzy Finder
@@ -130,6 +135,8 @@ nmap <leader>w :w<CR>
 nmap <leader>a ggVG
 nmap <leader>vm :e ~/.vimrc<CR>
 nmap <silent> <leader><space> :noh<CR>
+
+nnoremap <leader>e :NERDTreeToggle<CR>
 
 " --- Navigation ---
 " Half-page scrolling that centers the cursor
@@ -174,14 +181,22 @@ nmap <silent> <leader><CR> o<ESC>
 "  PLUGIN CONFIGURATION
 " =============================================================================
 
-" --- netrw (File Explorer) ---
-let g:netrw_banner = 0                 " Hide the directory banner
-let g:netrw_liststyle = 0              " Use tree-style view
-let g:netrw_browse_split = 4           " Open files in the previous window (acting like a sidebar)
-let g:netrw_winsize = 25               " Set sidebar width to 25%
-let g:netrw_localcopydircmd = 'cp -r'  " Ensure recursive copy works
-" Map leader-e to open netrw in a vertical split, like NERDTree
-nmap <leader>e :Vexplore<CR>
+" --- NERDTree ---
+" Disable the built-in netrw to prevent conflicts.
+let g:loaded_netrw = 1
+let g:loaded_netrwPlugin = 1
+
+" --- NERDTree optimal settings for maximum responsiveness ---
+let g:NERDTreeMinimalUI = 1           " Enable minimal UI for faster rendering.
+let g:NERDTreeHijackNetrw = 1         " Make NERDTree the default for opening directories.
+let g:NERDTreeShowHidden = 1          " Show hidden files.
+let g:NERDTreeAutoClose = 1           " Close NERDTree when a file is opened from it.
+
+" Ignore common clutter and large directories to speed up scanning.
+let g:NERDTreeIgnore = [
+    \ '\.pyc$', '\.swp$', '\.git$', '\.hg$', '\.svn$', '\.DS_Store$',
+    \ '__pycache__', 'node_modules'
+    \ ]
 
 " --- Undotree ---
 nnoremap <F5> :UndotreeToggle<CR>
@@ -215,20 +230,15 @@ let g:ale_completion_enabled = 1
 let g:ale_completion_autoimport = 1
 let g:ale_virtualtext_cursor = 1
 
-" Линтеры: mypy для типов, ruff для всего остального
-let g:ale_linters = {'python': ['mypy', 'ruff']}
-
-" Фиксеры: ruff делает всё (форматирование, импорты, автофикс)
-let g:ale_fixers = {
-\   'python': ['ruff'],
-\   '*': ['remove_trailing_lines', 'trim_whitespace']
-\ }
+let g:ale_linters = {'python': ['ruff', 'mypy'], '*': ['remove_trailing_lines', 'trim_whitespace']}
+let g:ale_fixers = {'python': ['ruff'], '*': ['remove_trailing_lines', 'trim_whitespace']}
 
 " Настройки для Python
 let g:ale_python_auto_pipenv = 1
 let g:ale_python_mypy_auto_pipenv = 1
 let g:ale_python_ruff_auto_pipenv = 1
 let g:ale_python_mypy_options = '--strict'
+let g:ale_python_auto_detect_virtualenv = 1
 
 " Настройки автодополнения
 set omnifunc=ale#completion#OmniFunc
@@ -253,6 +263,9 @@ nnoremap <silent> <Leader>fj <Cmd>%!jq<CR>
 nnoremap <silent> <Leader>fcj <Cmd>%!jq --compact-output<CR>
 vnoremap <silent> <Leader>fj :'<,'>!jq<CR>
 vnoremap <silent> <Leader>fcj :'<,'>!jq --compact-output<CR>
+
+" -- clean ^M
+nnoremap <silent> <leader>fcr :%s/\r//g<CR>:nohlsearch<CR>
 
 
 " =============================================================================
