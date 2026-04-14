@@ -136,6 +136,10 @@ nmap <leader>a ggVG
 nmap <leader>vm :e ~/.vimrc<CR>
 nmap <silent> <leader><space> :noh<CR>
 
+" --- Clipboard Operations ---
+nnoremap <leader>cf :let @+=expand('%:t')<CR>
+nnoremap <leader>cfp :let @+=expand('%:p')<CR>
+
 nnoremap <leader>e :NERDTreeToggle<CR>
 
 " --- Navigation ---
