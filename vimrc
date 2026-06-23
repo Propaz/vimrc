@@ -2,7 +2,6 @@
 "  PREAMBLE
 " =============================================================================
 set nocompatible
-filetype on
 filetype plugin indent on
 syntax on
 
@@ -35,7 +34,7 @@ set laststatus=2        " Always show the status line
 set cursorline          " Highlight the current line
 " set colorcolumn=85    " Show a column at 85 characters
 set wildmenu            " Visual autocomplete for command menu
-set wildcharm=<Tab>	" Trigger for wildmenu
+set wildcharm=<C-z>	" Trigger for wildmenu
 
 " Change cursor style between modes (for supported terminals)
 let &t_SI = "\e[6 q"
@@ -85,6 +84,13 @@ set undodir=~/.vim/.undo//
 set backupdir=~/.vim/.backup//
 set directory=~/.vim/.swp//
 
+" Create those directories if they don't exist yet
+for s:dir in ['~/.vim/.undo', '~/.vim/.backup', '~/.vim/.swp']
+    if !isdirectory(expand(s:dir))
+        call mkdir(expand(s:dir), 'p')
+    endif
+endfor
+
 
 " =============================================================================
 "  PLUGIN MANAGEMENT - VIM-PLUG
@@ -131,10 +137,10 @@ let mapleader=","
 " --- General ---
 nnoremap <silent> <F2> :set paste!<CR>
 nnoremap <silent> <C-q> :q<CR>
-nmap <leader>w :w<CR>
-nmap <leader>a ggVG
-nmap <leader>vm :e ~/.vimrc<CR>
-nmap <silent> <leader><space> :noh<CR>
+nnoremap <leader>w :w<CR>
+nnoremap <leader>a ggVG
+nnoremap <leader>vm :e $MYVIMRC<CR>
+nnoremap <silent> <leader><space> :noh<CR>
 
 " --- Clipboard Operations ---
 nnoremap <leader>cf :let @+=expand('%:t')<CR>
@@ -152,10 +158,9 @@ vnoremap <silent> <PageDown> <C-D>zz
 inoremap <silent> <PageDown> <C-O><C-D><C-O>zz
 
 " --- Buffer Navigation ---
-nmap <leader>n :bn<CR>
-nmap <leader>p :bp<CR>
-nmap <leader>b :buffer <Tab>
-nmap <leader>d :bprevious<CR>:bdelete #<CR>
+nnoremap <leader>n :bn<CR>
+nnoremap <leader>p :bp<CR>
+nnoremap <leader>d :bprevious<CR>:bdelete #<CR>
 
 " --- Tab Navigation ---
 nnoremap <C-t>     :tabnew<CR>
@@ -172,13 +177,11 @@ nnoremap <leader>7 7gt
 " Move selected lines up/down
 nnoremap <leader>j :m .+1<CR>==
 nnoremap <leader>k :m .-2<CR>==
-inoremap <leader>j <Esc>:m .+1<CR>==gi
-inoremap <leader>k <Esc>:m .-2<CR>==gi
 vnoremap <leader>j :m '>+1<CR>gv=gv
 vnoremap <leader>k :m '<-2<CR>gv=gv
 
 " Insert empty line below
-nmap <silent> <leader><CR> o<ESC>
+nnoremap <silent> <leader><CR> o<ESC>
 
 
 " =============================================================================
@@ -237,18 +240,19 @@ let g:ale_virtualtext_cursor = 1
 let g:ale_linters = {'python': ['ruff', 'mypy'], '*': ['remove_trailing_lines', 'trim_whitespace']}
 let g:ale_fixers = {'python': ['ruff'], '*': ['remove_trailing_lines', 'trim_whitespace']}
 
-" Настройки для Python
+" Python-specific settings
 let g:ale_python_auto_pipenv = 1
 let g:ale_python_mypy_auto_pipenv = 1
 let g:ale_python_ruff_auto_pipenv = 1
 let g:ale_python_mypy_options = '--strict'
 let g:ale_python_auto_detect_virtualenv = 1
 
-" Настройки автодополнения
-set omnifunc=ale#completion#OmniFunc
+" Completion settings
 set completeopt=menu,menuone,preview,noselect,noinsert
+" Use ALE's omni-completion everywhere except Go (handled by vim-go)
+autocmd FileType * if &filetype !=# 'go' | setlocal omnifunc=ale#completion#OmniFunc | endif
 
-" Более удобная навигация по ошибкам
+" Easier navigation between lint errors
 nmap <silent> [e <Plug>(ale_previous_wrap)
 nmap <silent> ]e <Plug>(ale_next_wrap)
 
@@ -279,9 +283,9 @@ nnoremap <silent> <leader>fcr :%s/\r//g<CR>:nohlsearch<CR>
 " Build or test Go files
 function! s:build_go_files()
   let l:file = expand('%')
-  if l:file =~# '^\+_test\.go$'
+  if l:file =~# '_test\.go$'
     call go#test#Test(0, 1)
-  elseif l:file =~# '^\+\.go$'
+  elseif l:file =~# '\.go$'
     call go#cmd#Build(0)
   endif
 endfunction
@@ -319,7 +323,7 @@ endfunction
 " Settings for handling large files
 let g:LargeFile = 1024 * 1024 * 10 " 10 MB
 function! LargeFile()
-  " Применяем локальные настройки ТОЛЬКО для этого буфера.
+  " Apply these settings to THIS buffer only.
   setlocal bufhidden=unload
   setlocal noswapfile
   setlocal syntax=off
@@ -330,16 +334,14 @@ function! LargeFile()
   setlocal norelativenumber
   setlocal nohlsearch
 
-  " Глобально игнорируем FileType, НО только на время загрузки этого файла.
+  " Ignore FileType globally, but only while this file is loading.
   set eventignore+=FileType
 
-  " Создаем автокоманду, которая выполнится ОДИН РАЗ после загрузки
-  " этого буфера и вернет eventignore в нормальное состояние.
+  " Restore eventignore once, right after this buffer finishes loading.
   autocmd BufReadPost <buffer> ++once set eventignore-=FileType
 
-  " Выводим сообщение.
   echohl WarningMsg
-  echo "Активирован режим для больших файлов."
+  echo "Large file mode activated."
   echohl None
 endfunction
 
@@ -348,15 +350,14 @@ endfunction
 "  AUTOCOMMANDS
 " =============================================================================
 
-" Trim trailing whitespace on save
-autocmd BufWritePre * %s/\s\+$//e
+" Trailing whitespace is trimmed by ALE on save (see g:ale_fixers above)
 
 " --- Filetype Specific Settings ---
 autocmd BufNewFile,BufRead *.py setlocal expandtab autoindent tabstop=4 softtabstop=4 shiftwidth=4
 autocmd BufNewFile,BufRead *.go setlocal noexpandtab tabstop=4 shiftwidth=4
 
 " --- Go build mapping ---
-autocmd FileType go nmap <C-b> :<C-u>call <SID>build_go_files()<CR>
+autocmd FileType go nnoremap <C-b> :<C-u>call <SID>build_go_files()<CR>
 
 
 
