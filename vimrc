@@ -290,34 +290,23 @@ function! s:build_go_files()
   endif
 endfunction
 
-" Helper for command line execution
-function! CmdLine(str)
-    exe "menu Foo.Bar :" . a:str
-    emenu Foo.Bar
-    unmenu Foo
-endfunction
-
-" Search for visual selection
-function! VisualSelection(direction) range
+" Yank the visual selection and use it to search (f/b) or seed a substitution.
+function! s:VisualSelection(direction) range
     let l:saved_reg = @"
-    execute "normal! gvy"
+    normal! gvy
 
     let l:pattern = escape(@", '\/.*$^~[]')
-    let l:pattern = substitute(l:pattern, "\n$", "", "")
+    let l:pattern = substitute(l:pattern, '\n$', '', '')
 
-    let l:commands = {
-    \   'b': 'normal! ?' . l:pattern . '\<CR>',
-    \   'f': 'normal! /' . l:pattern . '\<CR>',
-    \   'replace': 'call CmdLine("%s" . ''/''. l:pattern . ''/'')',
-    \   'gv': 'call CmdLine("Rg " . ''/''. l:pattern . ''/'' . '' **/*.'')'
-    \ }
-
-    if has_key(l:commands, a:direction)
-        execute l:commands[a:direction]
-    endif
-
-    let @/ = l:pattern
     let @" = l:saved_reg
+    let @/ = l:pattern
+
+    if a:direction ==# 'replace'
+        call feedkeys(':%s/' . l:pattern . '/', 'n')
+    else
+        let l:slash = a:direction ==# 'b' ? '?' : '/'
+        call feedkeys(l:slash . l:pattern . "\<CR>", 'n')
+    endif
 endfunction
 
 " Settings for handling large files
@@ -380,10 +369,10 @@ augroup END
 
 " --- Visual Mode Mappings ---
 " Search for selected text
-vnoremap <silent> * :<C-u>call VisualSelection('f')<CR>
-vnoremap <silent> # :<C-u>call VisualSelection('b')<CR>
+vnoremap <silent> * :<C-u>call <SID>VisualSelection('f')<CR>
+vnoremap <silent> # :<C-u>call <SID>VisualSelection('b')<CR>
 " Search and replace selected text
-vnoremap <silent> <leader>r :call VisualSelection('replace')<CR>
+vnoremap <silent> <leader>r :call <SID>VisualSelection('replace')<CR>
 
 
 " =============================================================================
